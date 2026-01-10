@@ -1,0 +1,495 @@
+{
+  "name": "email automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        32
+      ],
+      "id": "fd8e8b1b-7506-4f15-a35e-bd189c380db0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 3,
+        "filters": {
+          "q": "is:unread -from:me -label:AUTO_REPLIED -category:promotions -category:social -category:updates"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        32
+      ],
+      "id": "c95ce673-b810-4043-aa68-6f910dbc8c95",
+      "name": "Get All Emails",
+      "webhookId": "b122ef6c-5421-4ce4-b579-266ebd6abfff",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gNRhJQL66FapFOgi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        32
+      ],
+      "id": "d9413e26-e9b5-424d-8f6e-053a97fd7025",
+      "name": "Get Single Email",
+      "webhookId": "b4a56cbf-120d-4fef-95c1-388798181728",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gNRhJQL66FapFOgi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are Moin (a real human) from Prestige Solutions.\nWrite like a real person from Pakistan: short, natural, no robotic lines.\nNever mention you are AI/assistant/bot.\n\nDecide if the email deserves a reply:\n- If it’s newsletter/promotions/marketing/OTP/system auto emails -> should_reply=false, category=\"newsletter\" or \"spam\", and reply_subject/reply_body MUST be empty strings.\n- If it’s a real human message -> should_reply=true and reply properly.\n\nReply rules:\n- 1–4 lines max.\n- Answer the question directly if asked.\n- Ask at most ONE follow-up question only if needed.\n- Match sender’s language (Urdu/Roman Urdu/English).\n- No signature unless the email is formal business. If informal: no signature.\n- Do not invent facts.\n\nReturn ONLY this structured object (no extra text, no markdown):\n{\n  \"should_reply\": boolean,\n  \"category\": \"business|support|sales|personal|newsletter|spam\",\n  \"reply_subject\": string,\n  \"reply_body\": string\n}\n\nEMAIL:\nFrom: {{ $node[\"Get Single Email\"].json.from?.value?.[0]?.name || \"\" }} <{{ $node[\"Get Single Email\"].json.from?.value?.[0]?.address || \"\" }}>\nSubject: {{ $node[\"Get Single Email\"].json.subject || \"\" }}\nBody: {{ $node[\"Get Single Email\"].json.text || $node[\"Get Single Email\"].json.snippet || $node[\"Get Single Email\"].json.body || \"\" }}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        32
+      ],
+      "id": "ac38741a-417a-49ff-bf55-db5d584f15e1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        560,
+        192
+      ],
+      "id": "0af0e0e7-7d33-4fbb-bd69-e08026024b73",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pCB44R9GjrbSNo16",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1pXMZ3KheGmXxn3jDBf8VnoJVYKRXYuKYFKIJSRZm2CY",
+          "mode": "list",
+          "cachedResultName": "EMAIL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXMZ3KheGmXxn3jDBf8VnoJVYKRXYuKYFKIJSRZm2CY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXMZ3KheGmXxn3jDBf8VnoJVYKRXYuKYFKIJSRZm2CY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "thread id": "={{ $('Get Single Email').item.json.threadId }}",
+            "sender name": "={{ $('Get Single Email').item.json.from.value[0].name }}",
+            "from email": "={{ $('Get Single Email').item.json.headers.from }}",
+            "email body": "={{ $('Get Single Email').item.json.text }}"
+          },
+          "matchingColumns": [
+            "thread id"
+          ],
+          "schema": [
+            {
+              "id": "sender name",
+              "displayName": "sender name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "from email",
+              "displayName": "from email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email body",
+              "displayName": "email body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "body draft reply",
+              "displayName": "body draft reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thread id",
+              "displayName": "thread id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1888,
+        224
+      ],
+      "id": "05999905-e74b-40ae-a6df-a1ddf2a2ffd9",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bAHxZqTIopopHe5x",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $node[\"Edit Fields\"].json.message_id }}",
+        "message": "={{ $node[\"Edit Fields\"].json.reply_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        16
+      ],
+      "id": "001e088b-efbd-485d-af3b-4a2e42651203",
+      "name": "Reply to a message",
+      "webhookId": "77070713-509e-4fd0-9d13-85d473b5161f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gNRhJQL66FapFOgi",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"should_reply\": true,\n  \"category\": \"business\",\n  \"reply_subject\": \"Re: Example subject\",\n  \"reply_body\": \"Thanks — yes, I’m available after 3pm tomorrow. What time works for you?\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        240
+      ],
+      "id": "14d0374c-a17a-4247-a6e7-e7d6a411757d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b50f73b9-2464-4327-8d0c-ff4631867084",
+              "leftValue": "={{$node[\"AI Agent\"].json.output.should_reply}}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "d7f5811b-61bf-4aca-8d98-6b76d245e3a0",
+              "leftValue": "={{ !['spam','newsletter','promo','promotion'].includes(($node[\"AI Agent\"].json.output.category || '').toLowerCase()) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1152,
+        96
+      ],
+      "id": "c4ee85a5-4bc3-49cf-a9bd-bc851e3c54ac",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "671f61b7-d1c8-47a2-a06d-cce94217c974",
+              "name": "=should_reply",
+              "value": "={{ $json.output.should_reply }}",
+              "type": "boolean"
+            },
+            {
+              "id": "a83c7a47-9590-4edc-bb2a-42ca5a13659d",
+              "name": "=category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "4262c796-8388-4897-9738-c5dabb6feb0e",
+              "name": "=reply_subject",
+              "value": "={{ $json.output.reply_subject }}",
+              "type": "string"
+            },
+            {
+              "id": "bc7f15bb-5b7f-4270-88ed-7edcabad50cf",
+              "name": "=reply_body",
+              "value": "={{ $json.output.reply_body }}",
+              "type": "string"
+            },
+            {
+              "id": "cd2a7578-9f22-4e4f-a9ea-07c73a1f4923",
+              "name": "=message_id",
+              "value": "={{ $('Get Single Email').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b184f3e8-f5d6-43bc-964a-d68035e3e62d",
+              "name": "=thread_id",
+              "value": "={{ $('Get Single Email').item.json.threadId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        32
+      ],
+      "id": "03c74870-0b4a-4be3-b914-e62f46c1b128",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Edit Fields').item.json.message_id }}",
+        "labelIds": [
+          "Label_7529783415272412793"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        64
+      ],
+      "id": "8b50b73a-1f89-4d52-a1b0-4e5657f71879",
+      "name": "Add label to message",
+      "webhookId": "3e2d9cf5-a21f-403c-a20a-cb9d9457ba3f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gNRhJQL66FapFOgi",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Emails": {
+      "main": [
+        [
+          {
+            "node": "Get Single Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Single Email": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e668e90a-51d4-4b0b-bf76-dc497cbb5091",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6a70597aab475d757eb90caa0e000a9abf2900b1c7666d3bf720311cc3b95390"
+  },
+  "id": "kabYDuJau2uxaZIB",
+  "tags": []
+}
