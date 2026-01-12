@@ -1,4 +1,4 @@
-# Email Automation (n8n) — Localhost v1
+# AI Gmail Auto-Reply & Triage (n8n + Gemini + Google Sheets) — Localhost v1
 
 ## What it does
 - Fetches emails on a schedule
@@ -8,7 +8,7 @@
 - Adds label + logs result to Google Sheets
 
 ## Workflow files
-- `workflows/email-automation-localhost-v1.json`
+workflows/email-automation-localhost-v1.json
 
 ## Setup (local)
 1) Import the workflow JSON into n8n
