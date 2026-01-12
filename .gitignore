@@ -11,8 +11,8 @@ database.sqlite
 *.log
 
 # OS junk
-.DS_Store
 Thumbs.db
+.DS_Store
 
 # Node (if you ever use npm)
 node_modules/
