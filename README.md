@@ -1,5 +1,6 @@
 # AI Gmail Auto-Reply & Triage (n8n + Gemini + Google Sheets) — Localhost v1
-Demo video: docs/demo.mp4
+Demo video: [docs/demo.mp4](docs/demo.mp4)
+
 ## What it does
 - Fetches emails on a schedule
 - Classifies intent (AI agent)
